@@ -1,0 +1,223 @@
+ package main
+
+  import "fmt"     // pacote de formatação
+//  import "reflect" // importando esse pacote, voce consegue usar uma função chammada TypeOf
+
+ func main() {
+	  var nome = "Douglas"
+	var versao = 1.1
+	fmt.Println("Olá sr.", nome)
+	fmt.Println("Esse programa está na versão", versao)
+
+	// fmt.Println("O tipo da variável nome é", reflect.TypeOf(nome)) // nos mostra o tipo da váriavel nome, no caso é uma string
+
+	fmt.Println("1- Iniciar o monitoramento")
+	fmt.Println("2- Exibir logs")
+	fmt.Println("0- Sair do programa")
+
+	var comando int 
+	// fmt.Scanf("%d", &comando) // & - endereço da variável comando
+	// Scanf - primeiro parametro "%d" é sempre um modificador, espera para ver o tipo da variável que o usuário ira escolher (string, int, floot), o segundo &comando é o endereço da variável que eu quero salvar o meu resultado
+
+		fmt.Scan(&comando) 
+		// modo mais simples de ser fazer esse função do Scan
+	
+	println("O comando escolhido foi", comando)
+
+	// if comando == 1 {
+		// 	fmt.Println("Monitorando...")
+		// } else if comando == 2 {
+		// 	fmt.Println("Exibindo log...")
+		// } else if comando == 0 {
+		// 	fmt.Println("Sair do monitoramento")
+		// } else {
+		// 	fmt.Println("Não conheço este comando!")
+		// }
+}
+
+/* func exibeNome() { explicando sobre arrays
+	nomes := []string{"Douglas", "Daniel", "Bernardo"}
+	// fmt.Println(len(nomes)) // quantidade de nome dentro do array
+	fmt.Println("O meu slice tem", len(nomes), "itens") quantidade de itens
+	fmt.Println("O meu slice tem capacidade para", cap(nomes), "itens") capacidade 
+
+	nomes = append(nomes, "aparecida")
+	fmt.Println("O meu slice tem", len(nomes), "itens")
+	fmt.Println("O meu slice tem capacidade para", cap(nomes), "itens")
+
+} */
+
+
+// algoritmo - idade : inteiro | GO - idade : int
+
+// algoritmo - salario : real | GO - salario : float
+
+// algoritmo - nome : caractere | GO - nome : str
+
+// algoritmo - sinalizador : logico | GO - sinalizador : bool
+
+
+package main
+
+import (
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strings"
+
+	// "io/ioutil"
+	"bufio"
+	"strconv" // converte arquivo para string
+	"time"
+)
+
+const monitoramentos = 3 
+const delay = 5
+
+func main() {
+
+	 exibeIntroducao()
+	 // lerSitesDoArquivo()
+
+	for {
+		exibeMenu()
+
+		comando := lerComando() // ler comando do usuário
+
+		switch comando {
+		case 1: 
+			iniciarMonitoramento()
+			break
+		case 2: 
+			fmt.Println("Exibindo Logs...")
+			imprimeLogs()
+			break
+		case 0:
+			fmt.Println("Sair do monitoramento")
+			os.Exit(0)
+			break
+		default: fmt.Println("Não conheço este programa!")
+			os.Exit(-1)
+			break
+		}
+		}
+	
+}
+
+func exibeIntroducao () {
+	var nome = "Douglas"
+	var versao = 1.1
+	fmt.Println("Olá sr.", nome)
+	fmt.Println("Esse programa está na versão", versao)
+	fmt.Println("")
+}
+
+func exibeMenu () {
+	fmt.Println("1- Iniciar o monitoramento")
+	fmt.Println("2- Exibir logs")
+	fmt.Println("0- Sair do programa")
+	fmt.Println("")
+}
+
+func lerComando () int {
+	var comandoLido int 
+	fmt.Scan(&comandoLido) 
+	fmt.Println("O comando escolhido foi", comandoLido)
+	fmt.Println("")
+
+	return comandoLido
+}
+
+func iniciarMonitoramento() {
+    fmt.Println("Monitorando...")
+
+    // sites := []string {"https://random-status-code.herokuapp.com/", "https://www.alura.com.br", "https://www.caelum.com.br"}
+
+	sites := lerSitesDoArquivo()
+
+	for i := 0 ; i < monitoramentos ; i++ { // repetição, fica repetindo o monitoramento, monitorar 3 vezes
+		for i , site := range sites { // retorna a posição e o item 
+			fmt.Println("Testando site" , i , ":" , site)
+			testaSite(site) // testando os 3 sites 
+		}
+		time.Sleep(delay * time.Second) // testar a cada 5 segundos
+		fmt.Println("") // espaçamento a cada testada 
+	}
+
+    fmt.Println("")
+}
+
+func testaSite (site string) {
+
+    resp, err := http.Get(site)
+
+	if err != nil {
+		fmt.Println("Ocorreu um erro:", err)
+	}
+
+    if resp.StatusCode == 200 {
+        fmt.Println("Site:", site, "foi carregado com sucesso!")
+		registraLog(site, true)
+    } else {
+        fmt.Println("Site:", site, "está com problemas. Status Code:", resp.StatusCode)
+		registraLog(site, false)
+    }
+}
+
+func lerSitesDoArquivo() []string { // ler um arquivo
+
+	var sites []string
+
+	arquivo, err := os.Open("sites.txt") // função que abre o arquivo 
+
+	if err != nil { // se o meu erro, for diferente de nulo... 
+		fmt.Println("Ocorreu um erro:", err ) 
+	} 
+
+	leitor := bufio.NewReader(arquivo) // criamos um leito, para ler string por string 
+
+	for { // colocar em um laço de repetição, para fica lendo as linhas
+		linha , err := leitor.ReadString('\n') // Ler até o caractere "pular linha" (\n)
+		linha = strings.TrimSpace(linha) // para tirar todos os espaço e pontos, que houver no sites.txt
+		fmt.Println(linha)
+		
+		sites = append(sites, linha) // quero colocar dentro do meu "sites", a minha "linha"
+
+		if err == io.EOF { // erro que ele da quando chega no final do arquivo
+			break
+		}
+	}
+	
+	arquivo.Close()
+
+	return sites 
+
+}
+
+func registraLog(site string, status bool) { // Aqui vamos registrar se o site está online 
+
+	arquivo, err := os.OpenFile("log.txt", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)  // escrever naquele arquivo, criar o arquivo e conseguir escrever em todas as linhas
+
+	if err != nil {
+		fmt.Println(err) // verificar se tem erro
+	}
+
+	arquivo.WriteString(time.Now().Format("02/01/2006 - 15:04:05") + " - " + site + "- online: " + strconv.FormatBool(status) + "\n") // strconv.FormatBoll() converte de bool para string, writestring passa uma string que vc quer escrever no arquivo que vc abriu
+
+	arquivo.Close()
+
+}
+
+func imprimeLogs () {
+
+	arquivo, err := ioutil.ReadFile("log.txt") // ioutill jeito rápido de ler o log inteiro
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(string(arquivo))
+
+}
